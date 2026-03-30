@@ -1,0 +1,48 @@
+sequenceDiagram
+    participant User
+    participant Entrypoint as CLI or Lambda
+    participant Config
+    participant Crawler
+    participant RegistryAPI as Registry API
+    participant Storage
+    participant Notifier
+    participant External
+
+    User->>Entrypoint: Start execution
+    Entrypoint->>Config: Load configuration
+    Config-->>Entrypoint: CrawlerConfig
+
+    loop For each registry
+        Entrypoint->>Crawler: Initialize crawler (ECR/DockerHub/Quay)
+        Crawler->>Crawler: Build HTTP session with retry
+
+        loop For each search term
+            Crawler->>RegistryAPI: Search for term
+            RegistryAPI-->>Crawler: Results (paginated)
+            Crawler->>Crawler: Apply filter pattern (regex)
+            Crawler->>Crawler: Exclude company-owned repos
+            Crawler->>Crawler: Deduplicate results
+            Crawler-->>Entrypoint: List of ImageResult
+        end
+    end
+
+    loop For each ImageResult
+        Entrypoint->>Storage: exists(image)?
+        Storage->>Storage: Query DynamoDB
+        Storage-->>Entrypoint: True / False
+
+        alt Image is new
+            Entrypoint->>Storage: save(image)
+            Storage->>External: Write to DynamoDB
+
+            loop For each notifier
+                Entrypoint->>Notifier: notify(image)
+                Notifier->>External: Send notification (Slack/Webhook)
+                Notifier-->>Entrypoint: Success / Failure
+            end
+        else Image exists
+            Entrypoint->>Entrypoint: Skip (already tracked)
+        end
+    end
+
+    Entrypoint-->>User: Return count of new images

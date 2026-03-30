@@ -1,0 +1,246 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Container Image Crawler — Serverless infrastructure for scanning public container
+  registries (ECR, DockerHub, Quay.io) on a schedule, storing results in DynamoDB,
+  and optionally sending notifications via Slack or webhook.
+
+# ─────────────────────────────────────────────
+# Parameters
+# ─────────────────────────────────────────────
+Parameters:
+
+  SearchTerms:
+    Type: String
+    Default: ""
+    Description: Comma-separated search terms to look for across registries.
+
+  ExcludeOwners:
+    Type: String
+    Default: ""
+    Description: Comma-separated repository owners to exclude from results.
+
+  Registries:
+    Type: String
+    Default: "ecr,dockerhub,quay"
+    AllowedPattern: "^[a-z,]+$"
+    Description: Comma-separated registries to crawl (ecr, dockerhub, quay).
+
+  FilterPattern:
+    Type: String
+    Default: ""
+    Description: Optional regex pattern to filter results by owner/image name.
+
+  ScheduleExpression:
+    Type: String
+    Default: "rate(1 day)"
+    Description: EventBridge schedule expression (e.g. "rate(1 day)", "cron(0 8 * * ? *)").
+
+  DynamoDBTableName:
+    Type: String
+    Default: "ContainerImageCrawlerTable"
+    Description: Name of the DynamoDB table for storing results.
+
+  TTLDays:
+    Type: Number
+    Default: 30
+    MinValue: 1
+    MaxValue: 365
+    Description: Number of days before DynamoDB entries expire.
+
+  NotificationBackends:
+    Type: String
+    Default: "console"
+    Description: Comma-separated notification backends (console, slack, webhook).
+
+  SlackWebhookUrl:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Slack incoming webhook URL (required if using slack notifier).
+
+  WebhookUrl:
+    Type: String
+    Default: ""
+    Description: Generic webhook URL (required if using webhook notifier).
+
+  WebhookSecret:
+    Type: String
+    Default: ""
+    NoEcho: true
+    Description: Optional bearer token for webhook authentication.
+
+  LambdaMemorySize:
+    Type: Number
+    Default: 512
+    MinValue: 128
+    MaxValue: 10240
+    Description: Memory (MB) allocated to the Lambda function.
+
+  LambdaTimeout:
+    Type: Number
+    Default: 900
+    MinValue: 30
+    MaxValue: 900
+    Description: Lambda timeout in seconds.
+
+  LogLevel:
+    Type: String
+    Default: "INFO"
+    AllowedValues:
+      - DEBUG
+      - INFO
+      - WARNING
+      - ERROR
+    Description: Logging level for the Lambda function.
+
+  S3Bucket:
+    Type: String
+    Description: S3 bucket containing the Lambda deployment package.
+
+  S3Key:
+    Type: String
+    Description: S3 key for the Lambda deployment package (.zip).
+
+# ─────────────────────────────────────────────
+# Conditions
+# ─────────────────────────────────────────────
+Conditions:
+  HasFilterPattern: !Not [!Equals [!Ref FilterPattern, ""]]
+  HasSlackWebhookUrl: !Not [!Equals [!Ref SlackWebhookUrl, ""]]
+  HasWebhookUrl: !Not [!Equals [!Ref WebhookUrl, ""]]
+  HasWebhookSecret: !Not [!Equals [!Ref WebhookSecret, ""]]
+
+# ─────────────────────────────────────────────
+# Resources
+# ─────────────────────────────────────────────
+Resources:
+
+  # ── DynamoDB Table ──
+  CrawlerTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref DynamoDBTableName
+      BillingMode: PAY_PER_REQUEST
+      AttributeDefinitions:
+        - AttributeName: repoOwner
+          AttributeType: S
+        - AttributeName: imageName
+          AttributeType: S
+      KeySchema:
+        - AttributeName: repoOwner
+          KeyType: HASH
+        - AttributeName: imageName
+          KeyType: RANGE
+      TimeToLiveSpecification:
+        AttributeName: expireDate
+        Enabled: true
+
+  # ── IAM Role ──
+  CrawlerLambdaRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "${AWS::StackName}-LambdaRole"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: DynamoDBAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - dynamodb:GetItem
+                  - dynamodb:PutItem
+                  - dynamodb:UpdateItem
+                  - dynamodb:Query
+                Resource: !GetAtt CrawlerTable.Arn
+        - PolicyName: CloudWatchLogs
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:PutLogEvents
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+
+  # ── CloudWatch Log Group ──
+  CrawlerLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "/aws/lambda/${AWS::StackName}-Crawler"
+      RetentionInDays: 30
+
+  # ── Lambda Function ──
+  CrawlerFunction:
+    Type: AWS::Lambda::Function
+    DependsOn: CrawlerLogGroup
+    Properties:
+      FunctionName: !Sub "${AWS::StackName}-Crawler"
+      Runtime: python3.12
+      Handler: container_crawler.lambda_handler.handler
+      Code:
+        S3Bucket: !Ref S3Bucket
+        S3Key: !Ref S3Key
+      Role: !GetAtt CrawlerLambdaRole.Arn
+      MemorySize: !Ref LambdaMemorySize
+      Timeout: !Ref LambdaTimeout
+      Environment:
+        Variables:
+          CRAWLER_SEARCH_TERMS: !Ref SearchTerms
+          CRAWLER_EXCLUDE_OWNERS: !Ref ExcludeOwners
+          CRAWLER_REGISTRIES: !Ref Registries
+          CRAWLER_FILTER_PATTERN: !If [HasFilterPattern, !Ref FilterPattern, !Ref "AWS::NoValue"]
+          CRAWLER_DYNAMODB_TABLE: !Ref DynamoDBTableName
+          CRAWLER_DYNAMODB_TTL_DAYS: !Ref TTLDays
+          CRAWLER_NOTIFICATION_BACKENDS: !Ref NotificationBackends
+          CRAWLER_SLACK_WEBHOOK_URL: !If [HasSlackWebhookUrl, !Ref SlackWebhookUrl, !Ref "AWS::NoValue"]
+          CRAWLER_WEBHOOK_URL: !If [HasWebhookUrl, !Ref WebhookUrl, !Ref "AWS::NoValue"]
+          CRAWLER_WEBHOOK_SECRET: !If [HasWebhookSecret, !Ref WebhookSecret, !Ref "AWS::NoValue"]
+          CRAWLER_LOG_LEVEL: !Ref LogLevel
+
+  # ── EventBridge Schedule ──
+  CrawlerScheduleRule:
+    Type: AWS::Events::Rule
+    Properties:
+      Name: !Sub "${AWS::StackName}-Schedule"
+      Description: !Sub "Triggers ${AWS::StackName} crawler on schedule"
+      ScheduleExpression: !Ref ScheduleExpression
+      State: ENABLED
+      Targets:
+        - Id: CrawlerLambdaTarget
+          Arn: !GetAtt CrawlerFunction.Arn
+
+  CrawlerSchedulePermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt CrawlerFunction.Arn
+      Action: lambda:InvokeFunction
+      Principal: events.amazonaws.com
+      SourceArn: !GetAtt CrawlerScheduleRule.Arn
+
+# ─────────────────────────────────────────────
+# Outputs
+# ─────────────────────────────────────────────
+Outputs:
+  LambdaFunctionArn:
+    Description: ARN of the crawler Lambda function
+    Value: !GetAtt CrawlerFunction.Arn
+
+  DynamoDBTableName:
+    Description: Name of the DynamoDB results table
+    Value: !Ref CrawlerTable
+
+  EventBridgeRuleArn:
+    Description: ARN of the EventBridge schedule rule
+    Value: !GetAtt CrawlerScheduleRule.Arn
+
+  LogGroupName:
+    Description: CloudWatch Log Group for the crawler
+    Value: !Ref CrawlerLogGroup

@@ -1,0 +1,47 @@
+# Container Image Crawler — Example Configuration
+# Copy this file to config.yaml and adjust as needed.
+# All values can also be overridden via environment variables (CRAWLER_*) or CLI flags.
+
+# Search terms to look for across all registries
+search_terms:
+  - mycompany
+
+# Repository owners to exclude from results (e.g. your own org)
+exclude_owners:
+  - myorg
+
+# Which registries to crawl (built-in: ecr, dockerhub, quay)
+registries:
+  - ecr
+  - dockerhub
+  - quay
+
+# Storage backend: dynamodb
+storage_backend: dynamodb
+storage_options:
+  table_name: ContainerImageCrawlerTable
+  ttl_days: 30
+  region: us-east-1
+
+# Notification backends (can enable multiple)
+notification_backends:
+  - console
+  # - slack
+  # - webhook
+
+notification_options:
+  slack:
+    webhook_url: "https://hooks.slack.com/services/YOUR/WEBHOOK/URL"
+  webhook:
+    url: "https://your-webhook-endpoint.example.com/hook"
+    # secret: "optional-bearer-token"
+    # headers:
+    #   X-Custom-Header: "value"
+
+# HTTP settings
+request_timeout: 30
+max_retries: 3
+retry_delay: 1.0
+
+# Logging: DEBUG | INFO | WARNING | ERROR
+log_level: INFO
