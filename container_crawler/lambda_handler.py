@@ -21,7 +21,7 @@ from __future__ import annotations
 import logging
 import os
 
-from container_crawler.config import CrawlerConfig, load_config
+from container_crawler.config import load_config
 from container_crawler.__main__ import run, setup_logging
 
 

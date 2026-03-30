@@ -9,8 +9,11 @@ import pytest
 from container_crawler.crawlers import REGISTRY_MAP, get_crawler, register_crawler
 from container_crawler.crawlers.base import BaseCrawler
 from container_crawler.crawlers.ecr import ECRCrawler
-from container_crawler.models import ImageResult
-from container_crawler.notifications import NOTIFIER_MAP, get_notifier, register_notifier
+from container_crawler.notifications import (
+    NOTIFIER_MAP,
+    get_notifier,
+    register_notifier,
+)
 from container_crawler.notifications.base import BaseNotifier
 from container_crawler.notifications.console import ConsoleNotifier
 from container_crawler.storage import STORAGE_MAP, get_storage, register_storage
@@ -21,6 +24,7 @@ from container_crawler.storage.dynamodb import DynamoDBStorage
 # ---------------------------------------------------------------------------
 # Fixtures to isolate module-level registry dicts between tests
 # ---------------------------------------------------------------------------
+
 
 @pytest.fixture(autouse=True)
 def _restore_crawler_registry():
@@ -50,8 +54,8 @@ def _restore_notifier_registry():
 # Crawler registry
 # ---------------------------------------------------------------------------
 
-class TestCrawlerRegistry:
 
+class TestCrawlerRegistry:
     def test_get_known_crawler(self):
         assert get_crawler("ecr") is ECRCrawler
 
@@ -74,8 +78,8 @@ class TestCrawlerRegistry:
 # Storage registry
 # ---------------------------------------------------------------------------
 
-class TestStorageRegistry:
 
+class TestStorageRegistry:
     def test_get_known_storage(self):
         assert get_storage("dynamodb") is DynamoDBStorage
 
@@ -99,8 +103,8 @@ class TestStorageRegistry:
 # Notifier registry
 # ---------------------------------------------------------------------------
 
-class TestNotifierRegistry:
 
+class TestNotifierRegistry:
     def test_get_known_notifier(self):
         assert get_notifier("console") is ConsoleNotifier
 

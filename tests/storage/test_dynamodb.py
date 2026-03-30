@@ -6,12 +6,11 @@ boto3 is fully mocked — no AWS credentials or network access required.
 import time
 from unittest.mock import MagicMock, patch
 
-from container_crawler.storage.dynamodb import DEFAULT_TABLE, DEFAULT_TTL_DAYS, DynamoDBStorage
+from container_crawler.storage.dynamodb import DEFAULT_TABLE, DynamoDBStorage
 
 
 @patch("container_crawler.storage.dynamodb.boto3")
 class TestDynamoDBInit:
-
     def test_defaults(self, mock_boto3):
         DynamoDBStorage()
         mock_boto3.resource.return_value.Table.assert_called_once_with(DEFAULT_TABLE)
@@ -27,7 +26,6 @@ class TestDynamoDBInit:
 
 @patch("container_crawler.storage.dynamodb.boto3")
 class TestDynamoDBExists:
-
     def test_exists_true(self, mock_boto3, sample_image):
         mock_table = MagicMock()
         mock_boto3.resource.return_value.Table.return_value = mock_table
@@ -58,7 +56,6 @@ class TestDynamoDBExists:
 
 @patch("container_crawler.storage.dynamodb.boto3")
 class TestDynamoDBSave:
-
     def test_item_structure(self, mock_boto3, sample_image):
         mock_table = MagicMock()
         mock_boto3.resource.return_value.Table.return_value = mock_table
@@ -90,7 +87,6 @@ class TestDynamoDBSave:
 
 @patch("container_crawler.storage.dynamodb.boto3")
 class TestDynamoDBContextManager:
-
     def test_context_manager(self, mock_boto3):
         with DynamoDBStorage({"table_name": "T"}) as storage:
             assert storage is not None

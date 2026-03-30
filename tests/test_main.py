@@ -4,15 +4,14 @@ from unittest.mock import MagicMock, patch
 
 from container_crawler.__main__ import main, parse_args, run
 from container_crawler.config import CrawlerConfig
-from container_crawler.models import ImageResult
 
 
 # ---------------------------------------------------------------------------
 # parse_args
 # ---------------------------------------------------------------------------
 
-class TestParseArgs:
 
+class TestParseArgs:
     def test_defaults(self):
         args = parse_args([])
         assert args.config is None
@@ -53,6 +52,7 @@ class TestParseArgs:
 # run()
 # ---------------------------------------------------------------------------
 
+
 def _make_mock_crawler(results):
     """Return a mock crawler class whose instances .crawl() returns *results*."""
     mock_cls = MagicMock()
@@ -61,7 +61,6 @@ def _make_mock_crawler(results):
 
 
 class TestRun:
-
     @patch("container_crawler.__main__.get_crawler")
     def test_dry_run(self, mock_get_crawler, sample_config, sample_image):
         mock_get_crawler.return_value = _make_mock_crawler([sample_image])
@@ -73,7 +72,12 @@ class TestRun:
     @patch("container_crawler.__main__.get_storage")
     @patch("container_crawler.__main__.get_crawler")
     def test_new_image_saved_and_notified(
-        self, mock_get_crawler, mock_get_storage, mock_get_notifier, sample_config, sample_image
+        self,
+        mock_get_crawler,
+        mock_get_storage,
+        mock_get_notifier,
+        sample_config,
+        sample_image,
     ):
         mock_get_crawler.return_value = _make_mock_crawler([sample_image])
         mock_storage = MagicMock()
@@ -94,7 +98,12 @@ class TestRun:
     @patch("container_crawler.__main__.get_storage")
     @patch("container_crawler.__main__.get_crawler")
     def test_existing_image_skipped(
-        self, mock_get_crawler, mock_get_storage, mock_get_notifier, sample_config, sample_image
+        self,
+        mock_get_crawler,
+        mock_get_storage,
+        mock_get_notifier,
+        sample_config,
+        sample_image,
     ):
         mock_get_crawler.return_value = _make_mock_crawler([sample_image])
         mock_storage = MagicMock()
@@ -118,7 +127,12 @@ class TestRun:
     @patch("container_crawler.__main__.get_storage")
     @patch("container_crawler.__main__.get_crawler")
     def test_notifier_exception_caught(
-        self, mock_get_crawler, mock_get_storage, mock_get_notifier, sample_config, sample_image
+        self,
+        mock_get_crawler,
+        mock_get_storage,
+        mock_get_notifier,
+        sample_config,
+        sample_image,
     ):
         mock_get_crawler.return_value = _make_mock_crawler([sample_image])
         mock_storage = MagicMock()
@@ -149,8 +163,8 @@ class TestRun:
 # main()
 # ---------------------------------------------------------------------------
 
-class TestMain:
 
+class TestMain:
     @patch("container_crawler.__main__.run")
     @patch("container_crawler.__main__.load_config")
     def test_cli_overrides(self, mock_load_config, mock_run):
@@ -160,4 +174,6 @@ class TestMain:
         config = mock_run.call_args[0][0]
         assert config.registries == ["ecr"]
         assert config.search_terms == ["bigid"]
-        assert mock_run.call_args[1]["dry_run"] is True or mock_run.call_args[0][1] is True
+        assert (
+            mock_run.call_args[1]["dry_run"] is True or mock_run.call_args[0][1] is True
+        )

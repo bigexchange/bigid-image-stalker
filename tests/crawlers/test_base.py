@@ -17,6 +17,7 @@ from container_crawler.models import ImageResult
 # Stub crawler for testing base class behaviour
 # ---------------------------------------------------------------------------
 
+
 class StubCrawler(BaseCrawler):
     """Concrete subclass that yields pre-configured results."""
 
@@ -37,11 +38,13 @@ class StubCrawler(BaseCrawler):
 # HTTP helper tests
 # ---------------------------------------------------------------------------
 
-class TestHTTPHelpers:
 
+class TestHTTPHelpers:
     @responses.activate
     def test_get_success(self, sample_config):
-        responses.add(responses.GET, "https://example.com/api", json={"ok": True}, status=200)
+        responses.add(
+            responses.GET, "https://example.com/api", json={"ok": True}, status=200
+        )
         crawler = StubCrawler(sample_config)
         resp = crawler._get("https://example.com/api")
         assert resp is not None
@@ -56,7 +59,9 @@ class TestHTTPHelpers:
 
     @responses.activate
     def test_post_success(self, sample_config):
-        responses.add(responses.POST, "https://example.com/api", json={"ok": True}, status=200)
+        responses.add(
+            responses.POST, "https://example.com/api", json={"ok": True}, status=200
+        )
         crawler = StubCrawler(sample_config)
         resp = crawler._post("https://example.com/api", json={"q": "test"})
         assert resp is not None
@@ -74,8 +79,8 @@ class TestHTTPHelpers:
 # Owner exclusion
 # ---------------------------------------------------------------------------
 
-class TestIsExcluded:
 
+class TestIsExcluded:
     def test_match(self, sample_config):
         crawler = StubCrawler(sample_config)
         assert crawler._is_excluded("excluded-org") is True
@@ -93,8 +98,8 @@ class TestIsExcluded:
 # Filter matching
 # ---------------------------------------------------------------------------
 
-class TestMatchesFilter:
 
+class TestMatchesFilter:
     def test_no_pattern_always_matches(self, sample_config, sample_image):
         crawler = StubCrawler(sample_config)
         assert crawler._matches_filter(sample_image) is True
@@ -119,8 +124,8 @@ class TestMatchesFilter:
 # crawl() orchestration
 # ---------------------------------------------------------------------------
 
-class TestCrawl:
 
+class TestCrawl:
     def test_dedup(self, sample_config, sample_image):
         """Duplicate images (same registry:owner/name) should be collapsed to one."""
         crawler = StubCrawler(sample_config, results=[sample_image, sample_image])
@@ -139,8 +144,12 @@ class TestCrawl:
 
     def test_multiple_terms(self, sample_config):
         sample_config.search_terms = ["term1", "term2"]
-        img1 = ImageResult(repo_owner="a", image_name="x", registry="stub", link="https://x")
-        img2 = ImageResult(repo_owner="b", image_name="y", registry="stub", link="https://y")
+        img1 = ImageResult(
+            repo_owner="a", image_name="x", registry="stub", link="https://x"
+        )
+        img2 = ImageResult(
+            repo_owner="b", image_name="y", registry="stub", link="https://y"
+        )
 
         class MultiStub(BaseCrawler):
             registry_name = "stub"

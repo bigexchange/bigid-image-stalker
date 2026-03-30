@@ -12,7 +12,6 @@ WEBHOOK_URL = "https://example.com/webhook"
 
 
 class TestWebhookInit:
-
     def test_raises_without_url(self):
         with pytest.raises(ValueError, match="url"):
             WebhookNotifier({})
@@ -32,7 +31,6 @@ class TestWebhookInit:
 
 
 class TestWebhookNotify:
-
     @responses.activate
     def test_success_200(self, sample_image):
         responses.add(responses.POST, WEBHOOK_URL, status=200)
@@ -64,7 +62,8 @@ class TestWebhookNotify:
     @responses.activate
     def test_connection_error(self, sample_image):
         responses.add(
-            responses.POST, WEBHOOK_URL,
+            responses.POST,
+            WEBHOOK_URL,
             body=requests.ConnectionError("network down"),
         )
         notifier = WebhookNotifier({"url": WEBHOOK_URL})

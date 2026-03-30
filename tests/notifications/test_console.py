@@ -6,7 +6,6 @@ from container_crawler.notifications.console import ConsoleNotifier
 
 
 class TestConsoleNotifier:
-
     def test_notify_returns_true(self, sample_image):
         notifier = ConsoleNotifier()
         assert notifier.notify(sample_image) is True

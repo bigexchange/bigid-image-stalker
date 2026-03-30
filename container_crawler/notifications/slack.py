@@ -23,7 +23,9 @@ class SlackNotifier(BaseNotifier):
         super().__init__(options)
         self._url = self.options.get("webhook_url", "")
         if not self._url:
-            raise ValueError("SlackNotifier requires 'webhook_url' in notification_options.slack")
+            raise ValueError(
+                "SlackNotifier requires 'webhook_url' in notification_options.slack"
+            )
 
     def notify(self, image: ImageResult) -> bool:
         payload = {

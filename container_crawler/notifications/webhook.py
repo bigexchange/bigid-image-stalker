@@ -25,7 +25,9 @@ class WebhookNotifier(BaseNotifier):
         super().__init__(options)
         self._url = self.options.get("url", "")
         if not self._url:
-            raise ValueError("WebhookNotifier requires 'url' in notification_options.webhook")
+            raise ValueError(
+                "WebhookNotifier requires 'url' in notification_options.webhook"
+            )
 
         self._headers = {"Content-Type": "application/json"}
         if extra := self.options.get("headers"):

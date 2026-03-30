@@ -4,8 +4,6 @@ All HTTP calls are mocked with the ``responses`` library — no real network
 traffic is generated.
 """
 
-import json
-
 import responses
 
 from container_crawler.crawlers.ecr import ECRCrawler, SEARCH_URL
@@ -33,11 +31,11 @@ def _repo(name, owner, downloads=0):
 
 
 class TestECRSearch:
-
     @responses.activate
     def test_single_page(self, sample_config):
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([_repo("img1", "acme", 10), _repo("img2", "acme", 20)]),
             status=200,
         )
@@ -50,12 +48,14 @@ class TestECRSearch:
     @responses.activate
     def test_pagination(self, sample_config):
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([_repo("img1", "acme")], next_token="tok1"),
             status=200,
         )
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([_repo("img2", "acme")]),
             status=200,
         )
@@ -66,7 +66,8 @@ class TestECRSearch:
     @responses.activate
     def test_excludes_owner(self, sample_config):
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([_repo("img1", "excluded-org")]),
             status=200,
         )
@@ -77,7 +78,8 @@ class TestECRSearch:
     @responses.activate
     def test_skips_empty_name(self, sample_config):
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([_repo("", "acme")]),
             status=200,
         )
@@ -87,7 +89,8 @@ class TestECRSearch:
     @responses.activate
     def test_skips_empty_owner(self, sample_config):
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([_repo("img1", "")]),
             status=200,
         )
@@ -97,7 +100,8 @@ class TestECRSearch:
     @responses.activate
     def test_zero_results(self, sample_config):
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([], total_results=0),
             status=200,
         )
@@ -113,7 +117,8 @@ class TestECRSearch:
     @responses.activate
     def test_link_format(self, sample_config):
         responses.add(
-            responses.POST, SEARCH_URL,
+            responses.POST,
+            SEARCH_URL,
             json=_ecr_response([_repo("myimage", "myowner")]),
             status=200,
         )

@@ -12,7 +12,6 @@ WEBHOOK_URL = "https://hooks.slack.com/services/T00/B00/xxx"
 
 
 class TestSlackInit:
-
     def test_raises_without_webhook_url(self):
         with pytest.raises(ValueError, match="webhook_url"):
             SlackNotifier({})
@@ -27,7 +26,6 @@ class TestSlackInit:
 
 
 class TestSlackNotify:
-
     @responses.activate
     def test_success(self, sample_image):
         responses.add(responses.POST, WEBHOOK_URL, status=200)
@@ -55,7 +53,8 @@ class TestSlackNotify:
     @responses.activate
     def test_connection_error_returns_false(self, sample_image):
         responses.add(
-            responses.POST, WEBHOOK_URL,
+            responses.POST,
+            WEBHOOK_URL,
             body=requests.ConnectionError("network down"),
         )
         notifier = SlackNotifier({"webhook_url": WEBHOOK_URL})

@@ -8,7 +8,7 @@ import re
 
 import responses
 
-from container_crawler.crawlers.quay import QuayCrawler, SEARCH_URL, REPO_URL_TEMPLATE
+from container_crawler.crawlers.quay import QuayCrawler, SEARCH_URL
 
 
 def _search_response(results, has_additional=False):
@@ -25,11 +25,11 @@ def _stats_response(counts):
 
 
 class TestQuaySearch:
-
     @responses.activate
     def test_single_page(self, sample_config):
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([_repo("scanner", "acme")]),
             status=200,
         )
@@ -48,7 +48,8 @@ class TestQuaySearch:
     @responses.activate
     def test_pagination(self, sample_config):
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([_repo("img1", "acme")], has_additional=True),
             status=200,
         )
@@ -59,7 +60,8 @@ class TestQuaySearch:
             status=200,
         )
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([_repo("img2", "acme")]),
             status=200,
         )
@@ -76,7 +78,8 @@ class TestQuaySearch:
     @responses.activate
     def test_excludes_owner(self, sample_config):
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([_repo("scanner", "excluded-org")]),
             status=200,
         )
@@ -86,7 +89,8 @@ class TestQuaySearch:
     @responses.activate
     def test_skips_empty_name(self, sample_config):
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([_repo("", "acme")]),
             status=200,
         )
@@ -96,7 +100,8 @@ class TestQuaySearch:
     @responses.activate
     def test_skips_empty_namespace(self, sample_config):
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([{"name": "scanner", "namespace": {"name": ""}}]),
             status=200,
         )
@@ -107,7 +112,8 @@ class TestQuaySearch:
     def test_skips_when_stats_unavailable(self, sample_config):
         """If the per-repo stats endpoint fails, the image should be skipped."""
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([_repo("scanner", "acme")]),
             status=200,
         )
@@ -122,7 +128,8 @@ class TestQuaySearch:
     @responses.activate
     def test_empty_results(self, sample_config):
         responses.add(
-            responses.GET, SEARCH_URL,
+            responses.GET,
+            SEARCH_URL,
             json=_search_response([]),
             status=200,
         )

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 import argparse
 import logging
-import sys
 
 from container_crawler.config import CrawlerConfig, load_config
 from container_crawler.crawlers import get_crawler
@@ -34,13 +33,25 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         description="Scan public container registries for images matching search terms.",
     )
     parser.add_argument("-c", "--config", default=None, help="Path to YAML config file")
-    parser.add_argument("--registries", nargs="+", help="Registries to crawl (e.g. ecr dockerhub quay)")
+    parser.add_argument(
+        "--registries", nargs="+", help="Registries to crawl (e.g. ecr dockerhub quay)"
+    )
     parser.add_argument("--search-terms", nargs="+", help="Search terms to look for")
-    parser.add_argument("--exclude-owners", nargs="+", help="Repository owners to exclude")
+    parser.add_argument(
+        "--exclude-owners", nargs="+", help="Repository owners to exclude"
+    )
     parser.add_argument("--storage", help="Storage backend (dynamodb)")
-    parser.add_argument("--filter-pattern", default=None, help="Regex pattern to filter results by owner/image (e.g. 'scanner$', 'myorg-(ui|web)')")
-    parser.add_argument("--log-level", default=None, help="Log level (DEBUG, INFO, WARNING, ERROR)")
-    parser.add_argument("--dry-run", action="store_true", help="Search only — do not save or notify")
+    parser.add_argument(
+        "--filter-pattern",
+        default=None,
+        help="Regex pattern to filter results by owner/image (e.g. 'scanner$', 'myorg-(ui|web)')",
+    )
+    parser.add_argument(
+        "--log-level", default=None, help="Log level (DEBUG, INFO, WARNING, ERROR)"
+    )
+    parser.add_argument(
+        "--dry-run", action="store_true", help="Search only — do not save or notify"
+    )
     return parser.parse_args(argv)
 
 
@@ -78,7 +89,11 @@ def run(config: CrawlerConfig, dry_run: bool = False) -> int:
 
             for image in results:
                 if dry_run:
-                    logger.info("[dry-run] Would save: %s from %s", image.full_name, image.registry)
+                    logger.info(
+                        "[dry-run] Would save: %s from %s",
+                        image.full_name,
+                        image.registry,
+                    )
                     new_count += 1
                     continue
 
@@ -88,7 +103,9 @@ def run(config: CrawlerConfig, dry_run: bool = False) -> int:
 
                 # New discovery
                 new_count += 1
-                logger.info("New image discovered: %s (%s)", image.full_name, image.registry)
+                logger.info(
+                    "New image discovered: %s (%s)", image.full_name, image.registry
+                )
 
                 if storage:
                     storage.save(image)
@@ -97,7 +114,11 @@ def run(config: CrawlerConfig, dry_run: bool = False) -> int:
                     try:
                         notifier.notify(image)
                     except Exception:
-                        logger.exception("Notifier %s failed for %s", type(notifier).__name__, image.full_name)
+                        logger.exception(
+                            "Notifier %s failed for %s",
+                            type(notifier).__name__,
+                            image.full_name,
+                        )
     finally:
         if storage:
             storage.close()

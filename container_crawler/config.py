@@ -75,4 +75,6 @@ def load_config(path: str | Path | None = None) -> CrawlerConfig:
     if env_log := os.environ.get("CRAWLER_LOG_LEVEL"):
         raw["log_level"] = env_log.upper()
 
-    return CrawlerConfig(**{k: v for k, v in raw.items() if k in CrawlerConfig.__dataclass_fields__})
+    return CrawlerConfig(
+        **{k: v for k, v in raw.items() if k in CrawlerConfig.__dataclass_fields__}
+    )

@@ -2,7 +2,7 @@
 
 import yaml
 
-from container_crawler.config import CrawlerConfig, load_config
+from container_crawler.config import load_config
 
 
 class TestDefaults:

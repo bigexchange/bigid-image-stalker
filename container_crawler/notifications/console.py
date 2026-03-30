@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import Any
 
 from container_crawler.models import ImageResult
 from container_crawler.notifications.base import BaseNotifier

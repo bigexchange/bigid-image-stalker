@@ -1,0 +1,2 @@
+[console_scripts]
+container-crawler = container_crawler.__main__:main

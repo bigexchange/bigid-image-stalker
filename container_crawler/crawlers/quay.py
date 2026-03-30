@@ -24,7 +24,11 @@ class QuayCrawler(BaseCrawler):
 
     def _get_total_downloads(self, repo_owner: str, image_name: str) -> int | None:
         url = REPO_URL_TEMPLATE.format(owner=repo_owner, name=image_name)
-        resp = self._get(url, headers=COMMON_HEADERS, params={"includeStats": True, "includeTags": False})
+        resp = self._get(
+            url,
+            headers=COMMON_HEADERS,
+            params={"includeStats": True, "includeTags": False},
+        )
         if resp is None:
             return None
 
@@ -58,7 +62,11 @@ class QuayCrawler(BaseCrawler):
 
                 downloads = self._get_total_downloads(namespace, image_name)
                 if downloads is None:
-                    logger.warning("[quay] Could not fetch downloads for %s/%s, skipping", namespace, image_name)
+                    logger.warning(
+                        "[quay] Could not fetch downloads for %s/%s, skipping",
+                        namespace,
+                        image_name,
+                    )
                     continue
 
                 yield ImageResult(
