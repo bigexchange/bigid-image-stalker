@@ -3,7 +3,6 @@ from __future__ import annotations
 import abc
 import logging
 import re
-import time
 from typing import Iterator
 
 import requests
@@ -96,7 +95,9 @@ class BaseCrawler(abc.ABC):
                     seen.add(key)
 
                     if not self._matches_filter(image):
-                        logger.debug("[%s] Filtered out %s", self.registry_name, image.full_name)
+                        logger.debug(
+                            "[%s] Filtered out %s", self.registry_name, image.full_name
+                        )
                         continue
 
                     results.append(image)
@@ -107,7 +108,11 @@ class BaseCrawler(abc.ABC):
                         image.total_downloads,
                     )
             except Exception:
-                logger.exception("[%s] Unexpected error searching for '%s'", self.registry_name, term)
+                logger.exception(
+                    "[%s] Unexpected error searching for '%s'", self.registry_name, term
+                )
 
-        logger.info("[%s] Crawl complete — %d image(s) found", self.registry_name, len(results))
+        logger.info(
+            "[%s] Crawl complete — %d image(s) found", self.registry_name, len(results)
+        )
         return results

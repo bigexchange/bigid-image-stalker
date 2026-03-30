@@ -44,7 +44,9 @@ class DynamoDBStorage(BaseStorage):
         return "Item" in resp
 
     def save(self, image: ImageResult) -> None:
-        expire = int((datetime.now(timezone.utc) + timedelta(days=self._ttl_days)).timestamp())
+        expire = int(
+            (datetime.now(timezone.utc) + timedelta(days=self._ttl_days)).timestamp()
+        )
         self._table.put_item(
             Item={
                 "repoOwner": image.repo_owner,
